@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="这篇博客是按照我学习素数的顺序写的，算法也是一步步推进，一步步优化的，想找最高效的算法可以从目录直接跳转到欧拉筛。这是我的第一篇博客，欢迎各路大神指正错误以及提供建议。 素数定义质数又称素数。一个大于1的自然数，除了1和它自身外，不能被其他自然数整除的数叫做质数；否则称为合数。0和1既不是质数，也不是合数。2是最小的素数，也是唯一一个偶素数。 在比赛中，经常碰到素数相关的题目，下面介绍几种常见的素">
+<meta name="keywords" content="数论,素数筛">
+<meta property="og:type" content="article">
+<meta property="og:title" content="素数筛法">
+<meta property="og:url" content="http://kaixinqi.github.io/2019/02/12/素数筛法/index.html">
+<meta property="og:site_name" content="Kaixinqi&#39;s Blog">
+<meta property="og:description" content="这篇博客是按照我学习素数的顺序写的，算法也是一步步推进，一步步优化的，想找最高效的算法可以从目录直接跳转到欧拉筛。这是我的第一篇博客，欢迎各路大神指正错误以及提供建议。 素数定义质数又称素数。一个大于1的自然数，除了1和它自身外，不能被其他自然数整除的数叫做质数；否则称为合数。0和1既不是质数，也不是合数。2是最小的素数，也是唯一一个偶素数。 在比赛中，经常碰到素数相关的题目，下面介绍几种常见的素">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-05-20T14:58:07.530Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="素数筛法">
+<meta name="twitter:description" content="这篇博客是按照我学习素数的顺序写的，算法也是一步步推进，一步步优化的，想找最高效的算法可以从目录直接跳转到欧拉筛。这是我的第一篇博客，欢迎各路大神指正错误以及提供建议。 素数定义质数又称素数。一个大于1的自然数，除了1和它自身外，不能被其他自然数整除的数叫做质数；否则称为合数。0和1既不是质数，也不是合数。2是最小的素数，也是唯一一个偶素数。 在比赛中，经常碰到素数相关的题目，下面介绍几种常见的素">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://kaixinqi.github.io/2019/02/12/素数筛法/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>素数筛法 | Kaixinqi's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Kaixinqi's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">Hello,World.</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://kaixinqi.github.io/2019/02/12/素数筛法/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Kaixinqi">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Kaixinqi's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">素数筛法
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-12 14:43:09" itemprop="dateCreated datePublished" datetime="2019-02-12T14:43:09+08:00">2019-02-12</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-05-20 22:58:07" itemprop="dateModified" datetime="2019-05-20T22:58:07+08:00">2019-05-20</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/数论/" itemprop="url" rel="index"><span itemprop="name">数论</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon">
+            <i class="fa fa-eye"></i>
+             阅读次数： 
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这篇博客是按照我学习素数的顺序写的，算法也是一步步推进，一步步优化的，想找最高效的算法可以从目录直接跳转到欧拉筛。这是我的第一篇博客，欢迎各路大神指正错误以及提供建议。</p>
+<h2 id="素数定义"><a href="#素数定义" class="headerlink" title="素数定义"></a>素数定义</h2><p>质数又称素数。一个大于1的自然数，除了1和它自身外，不能被其他自然数整除的数叫做质数；否则称为合数。<br>0和1既不是质数，也不是合数。<br>2是最小的素数，也是唯一一个偶素数。</p>
+<p>在比赛中，经常碰到素数相关的题目，下面介绍几种常见的素数判断方法。</p>
+<h2 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h2><p>从2到a-1进行枚举，如果存在i使a能被i整除（a%i==0成立），则a为合数。如果不存在这样的i，则a为质数。<br>以下代码功能为：输入一个数，判断是否为质数。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;bits/stdc++.h&gt; //“万能头文件”</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">long</span> <span class="keyword">long</span> ll;<span class="comment">//为编码方便，进行typedef</span></span><br><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">isprime</span><span class="params">(ll a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ll i;</span><br><span class="line">    <span class="keyword">for</span>(i=<span class="number">2</span>;i&lt;a;i++)</span><br><span class="line">        <span class="keyword">if</span>(a%i==<span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">if</span>(a==i) <span class="keyword">return</span> <span class="literal">true</span>;<span class="comment">//如果在2到a-1都没有找到能整除a的值，则a为质数</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> <span class="literal">false</span>;<span class="comment">//循环中找到了能整除a的值，break过，导致a不等于i</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;	<span class="comment">//主函数</span></span><br><span class="line">    ll a;</span><br><span class="line">    <span class="built_in">cin</span>&gt;&gt;a;</span><br><span class="line">    <span class="keyword">if</span>(isprime(a)) <span class="built_in">cout</span>&lt;&lt;<span class="string">"YES"</span>&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="built_in">cout</span>&lt;&lt;<span class="string">"NO"</span>&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>时间复杂度：对每一个数，isprime函数最多运算a-2次，时间复杂度接近$O(a)$。</p>
+<h2 id="初步优化"><a href="#初步优化" class="headerlink" title="初步优化"></a>初步优化</h2><h3 id="内容"><a href="#内容" class="headerlink" title="内容"></a>内容</h3><p>实际上，我们只需要枚举$\sqrt a$次即可完成判断，可将时间复杂度优化到$O(\sqrt a)$。</p>
+<h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>利用反证法，假设一个数a，在2到$\sqrt a$之间没有找到a的因数，却在$\sqrt a+1$到$a-1$之间找到一个a的因数i，则必存在a的另一个因数$j=\frac{a}{i}$。因为$i&gt;\sqrt a$，可得$\frac{1}{i}&lt;\frac{\sqrt a}{a}$，可得$j=\frac{a}{i}&lt;\sqrt a$，与假设矛盾。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">isprime</span><span class="params">(ll a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ll i;</span><br><span class="line">    <span class="keyword">if</span>(a&lt;=<span class="number">1</span>) <span class="keyword">return</span> <span class="literal">false</span>;<span class="comment">//防止某些题目出0、1一类的数据 </span></span><br><span class="line">    <span class="keyword">for</span>(i=<span class="number">2</span>;i*i&lt;=a;i++)</span><br><span class="line">        <span class="keyword">if</span>(a%i==<span class="number">0</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="素数筛法"><a href="#素数筛法" class="headerlink" title="素数筛法"></a>素数筛法</h2><p>现在我们要输出所有n以内的素数，请在1s内完成。（n&lt;=10^6^）<br>如果我们仍然按照刚才的方法来解决这个问题，由于每一次询问的时间复杂度为$O(\sqrt n)$，那m次询问的总复杂度会达到O(n^1.5^)，运算量的数量级为10^9^，那么等待我们的就会是——<br><strong><font color="#FF0000" size="5">Time Limit Exceeded.（时间超限）</font></strong><br>所以我们需要更高效的做法，于是就有了素数筛选法。</p>
+<h3 id="埃氏筛"><a href="#埃氏筛" class="headerlink" title="埃氏筛"></a>埃氏筛</h3><h4 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h4><p>当一个数i是素数时，i的所有倍数必然是合数，就可以从素数集中划去。如果i已经判断为合数了那就不必划掉i的倍数了，因为i的倍数已经被i的素因子划掉了。</p>
+<h4 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h4><p>我们可以建立一个2到n的集合，把最小数2保留，2的倍数划掉。然后寻找最小的下一个数3，由于它没有被划掉，它也就无法被比他小的数整除，因此它是素数。此时，再划掉3的所有倍数。再找下一个数5（4被2划掉了，因此4是合数，无需考虑），划掉5的所有倍数。这样反复操作，就能枚举n以内的素数。</p>
+<h4 id="模拟"><a href="#模拟" class="headerlink" title="模拟"></a>模拟</h4><p>我们可以模拟一下寻找30以内的素数（加粗代表新划去的数）：</p>
+<ol>
+<li>建立集合<br>2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30</li>
+<li>筛除2的倍数：<strong>4 6 8 10 12 14 16 18 20 22 24 26 28 30</strong><br>2 3 5 7 9 11 13 15 17 19 21 23 25 27 29</li>
+<li>筛除3的倍数：6 <strong>9</strong> 12 <strong>15</strong> 18 <strong>21</strong> 24 <strong>27</strong> 30<br>2 3 5 7 11 13 17 19 23 25 29</li>
+<li>4为合数跳过4（之后合数省略）</li>
+<li>筛除5的倍数：10 15 20 <strong>25</strong> 30<br>2 3 5 7 11 13 17 19 23 29</li>
+<li>筛除7的倍数：14 21 28<br>2 3 5 7 11 13 17 19 23 29</li>
+<li>筛除11的倍数：22<br>2 3 5 7 11 13 17 19 23 29</li>
+<li>筛除13的倍数：26<br>2 3 5 7 11 13 17 19 23 29</li>
+<li>筛除17、19、23、29的倍数：均不含小于30的倍数<br>… …</li>
+<li>筛除到30，算法结束，30以内素数为：<br>2 3 5 7 11 13 17 19 23 29</li>
+</ol>
+<p>通过模拟我们发现从7开始没有筛除掉任何新的素数，因此我们可以进行优化。<br>事实上我们只需要枚举到$\sqrt n$。<br>原因：我们每次<strong>新</strong>划去的数只会是i的倍数中不含小于i的素因子的数，所以这些数必然包含大于等于的i素因子，所以这些数一定都是大于等于i^2^的数。</p>
+<h4 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h4><p>建立一个比较大的bool数组isprime[]，其大小取决于数据规模，比如n+5。为方便我们将<strong>素数记为false</strong>（因为bool全局变量初始值为false）从2开始，从小到大筛选每一个数i，如果i是素数，就将所有的i的倍数置为true，即筛掉所有该素数的倍数，否则不做任何处理，直接筛选下一个数。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> N=<span class="number">1e7</span>+<span class="number">5</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="keyword">bool</span> isprime[N]=&#123;<span class="literal">true</span>,<span class="literal">true</span>&#125;;<span class="comment">//将0、1筛去</span></span><br><span class="line"><span class="keyword">int</span> p[N];</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> n;</span><br><span class="line">    <span class="built_in">cin</span>&gt;&gt;n;</span><br><span class="line">    <span class="comment">//筛法开始</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">2</span>;i*i&lt;=n;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(!isprime[i])</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=i+i;j&lt;=n;j+=i)</span><br><span class="line">            isprime[j]=<span class="literal">true</span>;<span class="comment">//筛去j的倍数</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> k=<span class="number">1</span>;</span><br><span class="line">    p[<span class="number">0</span>]=<span class="number">2</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">3</span>;i&lt;=n;i+=<span class="number">2</span>)<span class="comment">//因为除2外无偶素数，可以只遍历奇数</span></span><br><span class="line">        <span class="keyword">if</span>(!isprime[i])</span><br><span class="line">            p[k++]=i;<span class="comment">//将素数按照顺序存入数组中</span></span><br><span class="line">    <span class="comment">//筛法结束</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;k;i++)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%d "</span>,p[i]);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这样的时间复杂度是O(nloglogn)。<del>其实我不知道是怎么算出来的</del><br>相比O（n^1.5^）的暴力做法快了很多，但我们还有更高效的做法。</p>
+<h3 id="欧拉筛"><a href="#欧拉筛" class="headerlink" title="欧拉筛"></a>欧拉筛</h3><h4 id="优化原理"><a href="#优化原理" class="headerlink" title="优化原理"></a>优化原理</h4><p>由刚刚埃氏筛的模拟我们不难发现，许多合数被筛选了多次，而我们在埃氏筛法的基础上进行优化，让每个合数只被它的<strong>最小质因子</strong>筛选一次，避免重复筛选，可以得到接近O(n)的时间复杂度。<br>先上代码：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> N=<span class="number">1e7</span>+<span class="number">5</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="keyword">bool</span> isprime[N]=&#123;<span class="literal">true</span>,<span class="literal">true</span>&#125;;</span><br><span class="line"><span class="keyword">int</span> p[N];</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> n;</span><br><span class="line">    <span class="built_in">cin</span>&gt;&gt;n;</span><br><span class="line">    <span class="comment">//筛法开始</span></span><br><span class="line">    <span class="keyword">int</span> k=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">2</span>;i&lt;=n;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(!isprime[i]) p[k++]=i;<span class="comment">//判到哪打到哪</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>;p[j]*i&lt;=n&amp;&amp;j&lt;k;j++)</span><br><span class="line">        &#123;</span><br><span class="line">            isprime[i*p[j]]=<span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">if</span>(i%p[j]==<span class="number">0</span>) <span class="keyword">break</span>;<span class="comment">//欧拉筛核心</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//筛法结束</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;k;i++)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%d "</span>,p[i]);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="核心代码"><a href="#核心代码" class="headerlink" title="核心代码"></a>核心代码</h4><p>接下来解释一下欧拉筛最为核心的一段代码<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>;p[j]*i&lt;=n&amp;&amp;j&lt;k;j++)</span><br><span class="line">&#123;</span><br><span class="line">    isprime[i*p[j]]=<span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">if</span>(i%p[j]==<span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在欧拉筛里，我们依然只筛除质数的倍数。由于已经打了一部分质数表，我们可以筛除p[j]<em>i（p是质数表）。判断条件中的p[j]</em>i&lt;=n保证了筛除的数不会超出n的范围，节省时间也防止了数组下标向上越界，j&lt;k保证j不超出当前质数表个数k。</p>
+<p>第三行就是将素数的i倍筛除，标为true。</p>
+<p>第四行是欧拉筛的核心也是最难理解的部分。我的个人理解就是我们让每个合数只被他的最小质因子筛除一次，如果i已经包含了p[j]这个因子，就有两种情况：</p>
+<ol>
+<li>i=p[j] ，此时p[j]一定是p中最后一个数，跳出循环</li>
+<li>i是p[j]的倍数，此时存在整数$k=\frac{i}{p[j]}$，i可表示为$k<em>p[j]$。如果不跳出，我们下一个准备筛除的数就是$p[j+1] </em>i$，即$p[j+1]<em>k</em>p[j]$，这个数的最小质因子是p[j]，不应被p[j+1]筛除。以此类推，之后筛除的所有数都有最小质因子p[j]，不应被更大的质因子筛除，故跳出循环。</li>
+</ol>
+<h2 id="米勒罗宾素数检测法"><a href="#米勒罗宾素数检测法" class="headerlink" title="米勒罗宾素数检测法"></a>米勒罗宾素数检测法</h2><p>基于随机算法，可以在O(logn)内判断一个数是否是素数，但存在一定的误差。<br>在需要判断的素数大小过大的时候，依靠素数筛法会爆内存，可以使用这种方法。<br><del>因为我没看懂就不具体写了，学会再回来更新。</del> </p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数论/" rel="tag"># 数论</a>
+          
+            <a href="/tags/素数筛/" rel="tag"># 素数筛</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/1701/01/01/hello-world/" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Kaixinqi</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">2</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                    
+                      
+                    
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">分类</span>
+                  
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">2</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/kaixinqi" title="GitHub &rarr; https://github.com/kaixinqi" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:1270259160@qq.com" title="E-Mail &rarr; mailto:1270259160@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#素数定义"><span class="nav-number">1.</span> <span class="nav-text">素数定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本方法"><span class="nav-number">2.</span> <span class="nav-text">基本方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初步优化"><span class="nav-number">3.</span> <span class="nav-text">初步优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#内容"><span class="nav-number">3.1.</span> <span class="nav-text">内容</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#原理"><span class="nav-number">3.2.</span> <span class="nav-text">原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#素数筛法"><span class="nav-number">4.</span> <span class="nav-text">素数筛法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#埃氏筛"><span class="nav-number">4.1.</span> <span class="nav-text">埃氏筛</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#原理-1"><span class="nav-number">4.1.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#做法"><span class="nav-number">4.1.2.</span> <span class="nav-text">做法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#模拟"><span class="nav-number">4.1.3.</span> <span class="nav-text">模拟</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码实现"><span class="nav-number">4.1.4.</span> <span class="nav-text">代码实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#欧拉筛"><span class="nav-number">4.2.</span> <span class="nav-text">欧拉筛</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#优化原理"><span class="nav-number">4.2.1.</span> <span class="nav-text">优化原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#核心代码"><span class="nav-number">4.2.2.</span> <span class="nav-text">核心代码</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#米勒罗宾素数检测法"><span class="nav-number">5.</span> <span class="nav-text">米勒罗宾素数检测法</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-star"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Kaixinqi</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.1.1</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+  
+  
+
+
+
+  
+  
+
+
+
+  
+  
+
+
+
+  
+  
+  <script id="ribbon" size="300" alpha="0.6" zindex="-1" src="/lib/canvas-ribbon/canvas-ribbon.js"></script>
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/three/three.min.js"></script>
+
+  
+  <script src="/lib/three/three-waves.min.js"></script>
+
+  
+  <script src="/lib/three/canvas_lines.min.js"></script>
+
+  
+  <script src="/lib/three/canvas_sphere.min.js"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/schemes/muse.js?v=7.1.1"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
