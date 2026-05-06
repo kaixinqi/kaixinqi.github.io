@@ -1,0 +1,1450 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>盖亚计划 种族竞拍器 (BGA官方算法)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --gaia-bg-1: #070b16;
+            --gaia-bg-2: #0d1630;
+            --gaia-bg-3: #1a1140;
+            --gaia-panel: rgba(10, 18, 38, 0.82);
+            --gaia-panel-strong: rgba(15, 24, 50, 0.92);
+            --gaia-border: rgba(110, 161, 255, 0.24);
+            --gaia-border-strong: rgba(124, 214, 255, 0.45);
+            --gaia-text: #e6f0ff;
+            --gaia-text-soft: #94a9d6;
+            --gaia-accent: #63d5ff;
+            --gaia-accent-2: #7c5cff;
+            --gaia-success: #1bd4a7;
+            --gaia-warn: #ffb84d;
+            --gaia-danger: #ff5c8a;
+        }
+        body {
+            color: var(--gaia-text);
+            background:
+                radial-gradient(circle at top, rgba(101, 213, 255, 0.16), transparent 30%),
+                radial-gradient(circle at 20% 20%, rgba(124, 92, 255, 0.18), transparent 28%),
+                radial-gradient(circle at 80% 12%, rgba(27, 212, 167, 0.12), transparent 22%),
+                linear-gradient(180deg, var(--gaia-bg-3) 0%, var(--gaia-bg-2) 35%, var(--gaia-bg-1) 100%);
+            background-attachment: fixed;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.45;
+            background-image:
+                radial-gradient(2px 2px at 12% 18%, rgba(255,255,255,0.85), transparent 55%),
+                radial-gradient(1.5px 1.5px at 28% 72%, rgba(99,213,255,0.7), transparent 55%),
+                radial-gradient(2px 2px at 84% 24%, rgba(124,92,255,0.75), transparent 55%),
+                radial-gradient(1.5px 1.5px at 66% 61%, rgba(255,255,255,0.65), transparent 55%),
+                radial-gradient(1.5px 1.5px at 92% 83%, rgba(99,213,255,0.55), transparent 55%);
+        }
+        .max-w-5xl {
+            position: relative;
+            z-index: 1;
+        }
+        h1, h2, h3, h4, .font-bold {
+            letter-spacing: 0.02em;
+        }
+        h1 {
+            color: #f5fbff !important;
+            text-shadow: 0 0 18px rgba(99, 213, 255, 0.22);
+        }
+        #player-order-display,
+        #step0,
+        #step1,
+        #step2,
+        #step3 {
+            background: linear-gradient(180deg, rgba(14, 24, 49, 0.94), rgba(8, 14, 31, 0.9)) !important;
+            border: 1px solid var(--gaia-border);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+        }
+        #player-order-display .bg-gray-100,
+        #randomized-factions-list > div,
+        #auction-factions-list > div {
+            background: rgba(22, 36, 72, 0.82) !important;
+            border-color: rgba(99, 213, 255, 0.28) !important;
+            color: var(--gaia-text);
+        }
+        .bg-gray-50 {
+            background: rgba(10, 18, 38, 0.72) !important;
+        }
+        .bg-white {
+            background: rgba(20, 31, 62, 0.78) !important;
+        }
+        .bg-gray-100 {
+            background: rgba(21, 34, 68, 0.88) !important;
+        }
+        .bg-gray-200 {
+            background: rgba(48, 69, 125, 0.55) !important;
+        }
+        .bg-green-50 {
+            background: rgba(11, 53, 53, 0.52) !important;
+        }
+        .bg-blue-50 {
+            background: rgba(12, 33, 67, 0.62) !important;
+        }
+        .border,
+        .border-gray-200,
+        .border-green-200,
+        .border-blue-200,
+        .border-green-300,
+        .border-blue-300 {
+            border-color: var(--gaia-border) !important;
+        }
+        .text-gray-800,
+        .text-gray-700,
+        .text-gray-600 {
+            color: var(--gaia-text) !important;
+        }
+        .text-gray-500 {
+            color: var(--gaia-text-soft) !important;
+        }
+        .step-active {
+            background: linear-gradient(135deg, var(--gaia-accent), var(--gaia-accent-2)) !important;
+            color: #04101d !important;
+            box-shadow: 0 0 18px rgba(99, 213, 255, 0.38);
+        }
+        .w-12.h-1.bg-gray-200 {
+            background: linear-gradient(90deg, rgba(99, 213, 255, 0.5), rgba(124, 92, 255, 0.36)) !important;
+        }
+        .faction-card { transition: all 0.2s ease; }
+        .faction-card:hover { transform: translateY(-1px); }
+        .faction-btn { 
+            transition: all 0.15s ease;
+            outline: none !important;
+            border: 2px solid transparent !important;
+        }
+        .faction-board {
+            position: relative;
+            width: 100%;
+            max-width: 742px;
+            margin: 0 auto;
+        }
+        .faction-board-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(124, 214, 255, 0.28);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+        }
+        .faction-hotspot {
+            position: absolute;
+            border-radius: 10px;
+            background: transparent;
+            border: 3px solid transparent !important;
+            box-shadow: none;
+        }
+        .faction-hotspot:hover {
+            background: transparent;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+        }
+        .faction-hotspot.selected {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.28) !important;
+            background-color: rgba(16, 185, 129, 0.28) !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+        .faction-hotspot.disabled {
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.28) !important;
+            background-color: rgba(239, 68, 68, 0.28) !important;
+        }
+        .faction-hotspot.paired-banned {
+            background: transparent !important;
+            background-color: transparent !important;
+            opacity: 0.55;
+        }
+        .faction-board-badge {
+            position: absolute;
+            left: 50%;
+            bottom: 10px;
+            transform: translateX(-50%);
+            background: rgba(4, 11, 25, 0.84);
+            color: #dff6ff;
+            border-radius: 9999px;
+            padding: 5px 12px;
+            font-size: 12px;
+            line-height: 1.2;
+            pointer-events: none;
+            border: 1px solid rgba(99, 213, 255, 0.3);
+        }
+        .faction-btn.selected:not(.faction-hotspot) { 
+            border-color: #10b981 !important;
+            background-color: #d1fae5 !important;
+        }
+        .faction-btn.disabled:not(.faction-hotspot) { 
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+            opacity: 0.7;
+        }
+        .faction-btn.paired-banned:not(.faction-hotspot) { 
+            opacity: 0.4;
+        }
+        .log-entry {
+            border-left: 3px solid rgba(124, 214, 255, 0.28);
+            padding-left: 10px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--gaia-text);
+        }
+        .log-switch { border-left-color: var(--gaia-warn); }
+        .log-bid { border-left-color: var(--gaia-accent); }
+        .log-win { border-left-color: var(--gaia-success); font-weight: bold; }
+        .player-order-badge { 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gaia-accent), var(--gaia-accent-2));
+            color: #04101d;
+            font-weight: bold;
+            font-size: 11px;
+            margin-right: 6px;
+            box-shadow: 0 0 14px rgba(99, 213, 255, 0.28);
+        }
+        .faction-order-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            background: linear-gradient(135deg, var(--gaia-success), var(--gaia-accent));
+            color: #04101d;
+            font-weight: bold;
+            font-size: 10px;
+            margin-right: 5px;
+        }
+        .bid-cell { transition: all 0.3s ease; }
+        .bid-cell.highlight { background-color: rgba(99, 213, 255, 0.16); font-weight: bold; }
+        .winner-cell { background-color: rgba(27, 212, 167, 0.16); font-weight: bold; }
+        .leader-cell { 
+            background-color: rgba(27, 212, 167, 0.18) !important; 
+            font-weight: bold; 
+            border: 2px solid var(--gaia-success) !important;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+        }
+        .original-bid { font-size: 14px; }
+        .gap-value { font-size: 11px; color: #8ca5d1; }
+        .current-bid { 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: var(--gaia-accent);
+        }
+        button {
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.24);
+        }
+        button.bg-green-500, button.hover\:bg-green-600 {
+            background: linear-gradient(135deg, #14b8a6, #2563eb) !important;
+        }
+        button.bg-blue-500, button.hover\:bg-blue-600 {
+            background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+        }
+        button.bg-gray-500, button.hover\:bg-gray-600 {
+            background: linear-gradient(135deg, #334155, #475569) !important;
+        }
+        button.bg-red-500, button.hover\:bg-red-600 {
+            background: linear-gradient(135deg, #be185d, #ef4444) !important;
+        }
+        button.bg-amber-500, button.hover\:bg-amber-600 {
+            background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+            color: #140d03 !important;
+        }
+        input, select {
+            background: rgba(7, 14, 30, 0.92) !important;
+            color: var(--gaia-text) !important;
+            border-color: rgba(124, 214, 255, 0.22) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+        input::placeholder {
+            color: #6f88b7;
+        }
+        option {
+            background: #0f1b36;
+            color: var(--gaia-text);
+        }
+        table {
+            color: var(--gaia-text);
+        }
+        th, td {
+            border-color: rgba(124, 214, 255, 0.18) !important;
+        }
+        th {
+            background: rgba(19, 32, 64, 0.95) !important;
+        }
+        #auction-log,
+        #results-summary,
+        #randomized-factions-display,
+        #auction-factions-display {
+            border: 1px solid var(--gaia-border) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-6">
+        <!-- 标题 -->
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-1">盖亚计划 种族竞拍器</h1>
+    
+
+        <!-- 玩家顺位显示（所有页面顶部） -->
+        <div id="player-order-display" class="bg-white rounded-lg shadow p-3 mb-5 hidden">
+            <h3 class="text-base font-bold mb-2 text-gray-700">当前玩家顺位</h3>
+            <div id="player-order-list" class="flex flex-wrap gap-3">
+                <!-- 玩家顺位将在这里动态显示 -->
+            </div>
+        </div>
+
+        <!-- 步骤指示器 -->
+        <div class="flex justify-center mb-8">
+            <div class="flex items-center space-x-3">
+                <div id="step0-indicator" class="step-active w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                <div class="w-12 h-1 bg-gray-200"></div>
+                <div id="step1-indicator" class="w-8 h-8 rounded-full flex items-center justify-center font-bold bg-gray-200 text-gray-600 text-sm">2</div>
+                <div class="w-12 h-1 bg-gray-200"></div>
+                <div id="step2-indicator" class="w-8 h-8 rounded-full flex items-center justify-center font-bold bg-gray-200 text-gray-600 text-sm">3</div>
+                <div class="w-12 h-1 bg-gray-200"></div>
+                <div id="step3-indicator" class="w-8 h-8 rounded-full flex items-center justify-center font-bold bg-gray-200 text-gray-600 text-sm">4</div>
+            </div>
+        </div>
+
+        <!-- 步骤0：设置玩家昵称 -->
+        <div id="step0" class="bg-white rounded-lg shadow-lg p-5 mb-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">步骤1：设置玩家信息</h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">玩家数量</label>
+                <select id="player-count" class="border rounded-lg px-3 py-1.5 w-20 text-sm">
+                    <option value="2">2人</option>
+                    <option value="3" selected>3人</option>
+                    <option value="4">4人</option>
+                </select>
+            </div>
+
+            <div id="player-names-container" class="space-y-2 mb-5">
+                <!-- 玩家昵称输入框将在这里动态生成 -->
+            </div>
+
+            <div class="text-center">
+                <button id="next-to-factions" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg text-base font-bold">
+                    下一步：选择种族 →
+                </button>
+            </div>
+        </div>
+
+        <!-- 步骤1：选择种族 -->
+        <div id="step1" class="bg-white rounded-lg shadow-lg p-5 mb-6 hidden">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">步骤2：选择可用种族</h2>
+            
+            <div class="mb-4 flex flex-wrap gap-3 items-center">
+                <div>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="include-expansion" class="rounded" checked>
+                        <span class="ml-2 text-sm">包含舰队扩展</span>
+                    </label>
+                </div>
+                <div id="faction-phase-tip" class="text-xs text-gray-500">当前是 Ban 阶段：点击种族可禁用/取消禁用，完成后再进入选族阶段。</div>
+                <div class="ml-auto flex gap-2">
+                    <button id="random-all" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm">
+                        随机补充
+                    </button>
+                    <button id="reset-factions" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm">
+                        重置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 图片版种族选择 -->
+            <div class="mb-3 text-sm text-gray-600">
+                点击图片中的种族区域进行切换；当前使用的是你提供的本地种族图。
+            </div>
+            <div id="factions-container" class="mb-5">
+                <!-- 图片版种族热区将在这里动态生成 -->
+            </div>
+            <div id="selected-factions-summary" class="text-sm text-gray-600 mb-5">
+                已选择 0 个种族
+            </div>
+
+            <div class="flex flex-wrap justify-between gap-3">
+                <button id="back-to-names" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">
+                    ← 返回设置玩家
+                </button>
+                <div class="flex gap-2">
+                    <button id="go-to-ban-phase" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm hidden">
+                        ← 返回 Ban 阶段
+                    </button>
+                    <button id="complete-ban-phase" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm">
+                        完成 Ban，进入选族
+                    </button>
+                    <button id="next-to-bid" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed hidden" disabled>
+                        下一步：输入出价 →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤2：输入出价（行列调换版，适配Tab键） -->
+        <div id="step2" class="bg-white rounded-lg shadow-lg p-5 mb-6 hidden">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">步骤3：输入每个玩家的最高出价</h2>
+            <p class="text-gray-600 mb-4 text-sm">按Tab键横向快速填写，输入每个玩家愿意为每个种族出的最高VP。</p>
+            
+            <!-- 已选种族顺序显示 -->
+            <div id="randomized-factions-display" class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <h4 class="font-bold text-green-800 mb-2 text-sm">已选种族顺序</h4>
+                <div id="randomized-factions-list" class="flex flex-wrap gap-2">
+                    <!-- 已选种族顺序将在这里显示 -->
+                </div>
+            </div>
+            
+            <div id="bid-table-container" class="overflow-x-auto mb-5">
+                <!-- 出价表格将在这里动态生成（行列调换） -->
+            </div>
+
+            <div class="flex justify-between">
+                <button id="back-to-factions" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">
+                    ← 返回选择种族
+                </button>
+                <button id="start-auction" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg text-base font-bold">
+                    开始自动竞拍
+                </button>
+            </div>
+        </div>
+
+        <!-- 步骤3：竞拍动画过程（表格终极优化版） -->
+        <div id="step3" class="bg-white rounded-lg shadow-lg p-5 mb-6 hidden">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">步骤4：竞拍过程</h2>
+            
+            <!-- 种族顺序显示 -->
+            <div id="auction-factions-display" class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <h4 class="font-bold text-blue-800 mb-2 text-sm">本次竞拍种族顺序</h4>
+                <div id="auction-factions-list" class="flex flex-wrap gap-2">
+                    <!-- 种族顺序将在这里显示 -->
+                </div>
+            </div>
+            
+            <!-- 合并后的超级状态表格 -->
+            <div id="auction-status-container" class="mb-4 overflow-x-auto">
+                <table id="auction-status-table" class="w-full border-collapse text-sm">
+                    <!-- 竞拍状态表格将在这里动态生成 -->
+                </table>
+            </div>
+
+            <!-- 表格说明 -->
+            <div class="text-xs text-gray-500 mb-4 text-center">
+                单元格说明：<span class="original-bid font-medium">原始出价</span> / <span class="gap-value">剩余可加价</span> | 蓝色数字=当前出价 | 绿色边框=当前领先者
+            </div>
+
+            <!-- 动画控制按钮 -->
+            <div class="flex justify-center gap-3 mb-4">
+                <button id="prev-step" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50" disabled>
+                    ← 上一步
+                </button>
+                <button id="auto-play" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                    ▶ 自动播放
+                </button>
+                <button id="next-step" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                    下一步 →
+                </button>
+                <button id="skip-animation" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
+                    跳过动画
+                </button>
+            </div>
+
+            <!-- 实时日志（全中文） -->
+            <div class="mb-4">
+                <h3 class="text-lg font-bold mb-2">拍卖日志</h3>
+                <div id="auction-log" class="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
+                    <!-- 拍卖日志将在这里实时显示 -->
+                </div>
+            </div>
+
+            <!-- 最终结果（动画结束后显示） -->
+            <div id="final-results" class="hidden">
+                <div id="results-summary" class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                    <!-- 结果摘要将在这里显示 -->
+                </div>
+
+                <div class="text-center">
+                    <button id="restart" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-bold">
+                        重新开始
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 种族数据
+        const allFactions = [
+            { color: 'white', colorName: '白色·冰雪', name1: '伊塔星人', name1En: 'Itars', name2: '超星人', name2En: 'Nevlas' },
+            { color: 'blue', colorName: '蓝色·陆地', name1: '亚特兰斯星人', name1En: 'Lantids', name2: '人类', name2En: 'Terrans' },
+            { color: 'red', colorName: '红色·氧化', name1: '圣禽族', name1En: 'Hadsch Hallas', name2: '蜂人', name2En: 'Ivits' },
+            { color: 'orange', colorName: '橙色·熔岩', name1: '炽炎族', name1En: 'Baltaks', name2: '晶矿星人', name2En: 'Geodens' },
+            { color: 'yellow', colorName: '黄色·沙漠', name1: '格伦星人', name1En: 'Gleens', name2: '异空族', name2En: 'Xenos' },
+            { color: 'brown', colorName: '棕色·沼泽', name1: '大使星人', name1En: 'Ambas', name2: '利爪族', name2En: 'Taklons' },
+            { color: 'gray', colorName: '灰色·钛金', name1: '章鱼人', name1En: 'Firaks', name2: '疯狂机器', name2En: 'Bescods' },
+            { color: 'cyan', colorName: '原行星', name1: '莫维兹星人', name1En: 'Mowyed', name2: '太空巨人', name2En: 'Space Giants', isExpansion: true },
+            { color: 'pink', colorName: '小行星', name1: '暗黑星人', name1En: 'Darkanians', name2: '焊修智械', name2En: 'Tinkeroids', isExpansion: true }
+        ];
+        const factionBoardImage = './5ef4cb2ea575aa8049e0f17d3c4d96f4.jpg';
+        const factionHotspots = {
+            Itars: { left: 4.3, top: 6.0, width: 41.8, height: 5.8 },
+            Nevlas: { left: 53.0, top: 6.0, width: 41.8, height: 5.8 },
+            Lantids: { left: 4.3, top: 16.2, width: 41.8, height: 5.8 },
+            Terrans: { left: 53.0, top: 16.2, width: 41.8, height: 5.8 },
+            'Hadsch Hallas': { left: 4.3, top: 26.4, width: 41.8, height: 5.8 },
+            Ivits: { left: 53.0, top: 26.4, width: 41.8, height: 5.8 },
+            Baltaks: { left: 4.3, top: 36.6, width: 41.8, height: 5.8 },
+            Geodens: { left: 53.0, top: 36.6, width: 41.8, height: 5.8 },
+            Gleens: { left: 4.3, top: 46.8, width: 41.8, height: 5.8 },
+            Xenos: { left: 53.0, top: 46.8, width: 41.8, height: 5.8 },
+            Ambas: { left: 4.3, top: 57.0, width: 41.8, height: 5.8 },
+            Taklons: { left: 53.0, top: 57.0, width: 41.8, height: 5.8 },
+            Firaks: { left: 4.3, top: 67.2, width: 41.8, height: 5.8 },
+            Bescods: { left: 53.0, top: 67.2, width: 41.8, height: 5.8 },
+            Mowyed: { left: 4.3, top: 77.4, width: 41.8, height: 5.8 },
+            'Space Giants': { left: 53.0, top: 77.4, width: 41.8, height: 5.8 },
+            Darkanians: { left: 4.3, top: 87.6, width: 41.8, height: 5.8 },
+            Tinkeroids: { left: 53.0, top: 87.6, width: 41.8, height: 5.8 }
+        };
+
+        // 颜色映射
+        const colorClasses = {
+            white: 'bg-gray-100 border-gray-300',
+            blue: 'bg-blue-100 border-blue-300',
+            red: 'bg-red-100 border-red-300',
+            orange: 'bg-orange-100 border-orange-300',
+            yellow: 'bg-yellow-100 border-yellow-300',
+            brown: 'bg-amber-100 border-amber-300',
+            gray: 'bg-gray-200 border-gray-400',
+            cyan: 'bg-cyan-100 border-cyan-300',
+            pink: 'bg-pink-100 border-pink-300'
+        };
+
+        let selectedFactions = [];
+        let disabledFactions = [];
+        let randomizedFactions = []; // 按步骤二选择顺序保存的种族顺序
+        let playerCount = 3;
+        let playerNames = [];
+        let playerOrder = []; // 随机后的玩家顺位
+        let factionPhase = 'ban';
+        let bids = {};
+        let auctionSteps = []; // 所有竞拍步骤
+        let currentStepIndex = 0;
+        let autoPlayInterval = null;
+        let auctionResult = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPlayerNames();
+            renderFactions();
+            setFactionPhase('ban');
+            setupEventListeners();
+        });
+
+        // 渲染玩家昵称输入框
+        function renderPlayerNames() {
+            const container = document.getElementById('player-names-container');
+            container.innerHTML = '';
+
+            for (let i = 0; i < playerCount; i++) {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2';
+                div.innerHTML = `
+                    <span class="w-14 text-gray-700 text-sm">玩家${i+1}:</span>
+                    <input type="text" class="player-name-input border rounded-lg px-3 py-1.5 flex-1 text-sm" 
+                           placeholder="请输入昵称" value="玩家${i+1}">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // 随机玩家顺位
+        function shufflePlayerOrder() {
+            playerNames = Array.from(document.querySelectorAll('.player-name-input'))
+                .map(input => input.value.trim() || `玩家${Array.from(document.querySelectorAll('.player-name-input')).indexOf(input)+1}`);
+            
+            playerOrder = [...playerNames].sort(() => Math.random() - 0.5);
+            updatePlayerOrderDisplay();
+        }
+
+        // 更新玩家顺位显示
+        function updatePlayerOrderDisplay() {
+            const display = document.getElementById('player-order-display');
+            const list = document.getElementById('player-order-list');
+            
+            display.classList.remove('hidden');
+            list.innerHTML = '';
+
+            playerOrder.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center bg-gray-100 rounded-lg px-2.5 py-1.5 text-sm';
+                div.innerHTML = `
+                    <span class="player-order-badge">${index+1}</span>
+                    <span>${name}</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // 渲染种族选择界面
+        function renderFactions() {
+            const container = document.getElementById('factions-container');
+            const includeExpansion = document.getElementById('include-expansion').checked;
+            container.innerHTML = '';
+            const board = document.createElement('div');
+            board.className = 'faction-board';
+            board.innerHTML = `
+                <img src="${factionBoardImage}" alt="盖亚计划种族选择图" class="faction-board-image">
+                <div class="faction-board-badge">选中 ${selectedFactions.length} / 至少 ${playerCount}</div>
+            `;
+            container.appendChild(board);
+
+            allFactions.forEach(pair => {
+                if (pair.isExpansion && !includeExpansion) return;
+
+                [
+                    { faction: pair.name1En, pairFaction: pair.name2En, label: pair.name1 },
+                    { faction: pair.name2En, pairFaction: pair.name1En, label: pair.name2 }
+                ].forEach(item => {
+                    const hotspot = factionHotspots[item.faction];
+                    if (!hotspot) return;
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'faction-btn faction-hotspot';
+                    btn.dataset.faction = item.faction;
+                    btn.dataset.pair = item.pairFaction;
+                    btn.title = `${item.label} (${item.faction})`;
+                    btn.setAttribute('aria-label', `${item.label} (${item.faction})`);
+                    btn.style.left = `${hotspot.left}%`;
+                    btn.style.top = `${hotspot.top}%`;
+                    btn.style.width = `${hotspot.width}%`;
+                    btn.style.height = `${hotspot.height}%`;
+                    board.appendChild(btn);
+                });
+            });
+
+            disabledFactions.forEach(faction => {
+                const btn = document.querySelector(`[data-faction="${faction}"]`);
+                if (btn) btn.classList.add('disabled');
+            });
+            selectedFactions.forEach(faction => {
+                const btn = document.querySelector(`[data-faction="${faction}"]`);
+                if (btn) btn.classList.add('selected');
+            });
+            if (factionPhase === 'select') {
+                selectedFactions.forEach(faction => {
+                    const btn = document.querySelector(`[data-faction="${faction}"]`);
+                    const pairBtn = btn ? document.querySelector(`[data-faction="${btn.dataset.pair}"]`) : null;
+                    if (pairBtn && !pairBtn.classList.contains('disabled')) {
+                        pairBtn.classList.add('paired-banned');
+                    }
+                });
+            }
+
+            // 添加点击事件（三态切换）
+            document.querySelectorAll('.faction-btn').forEach(btn => {
+                btn.addEventListener('click', () => toggleFactionState(btn));
+            });
+
+            updateNextButton();
+        }
+
+        function getFactionName(faction) {
+            for (const pair of allFactions) {
+                if (pair.name1En === faction) return pair.name1;
+                if (pair.name2En === faction) return pair.name2;
+            }
+            return faction;
+        }
+
+        function setFactionPhase(phase) {
+            factionPhase = phase;
+            const tip = document.getElementById('faction-phase-tip');
+            const completeBanBtn = document.getElementById('complete-ban-phase');
+            const backToBanBtn = document.getElementById('go-to-ban-phase');
+            const nextToBidBtn = document.getElementById('next-to-bid');
+            const randomAllBtn = document.getElementById('random-all');
+            const badge = document.querySelector('.faction-board-badge');
+
+            if (phase === 'ban') {
+                tip.textContent = '当前是 Ban 阶段：点击种族可禁用/取消禁用，完成后再进入选族阶段。';
+                completeBanBtn.classList.remove('hidden');
+                backToBanBtn.classList.add('hidden');
+                nextToBidBtn.classList.add('hidden');
+                randomAllBtn.disabled = true;
+                randomAllBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                if (badge) badge.textContent = `Ban 阶段 | 已禁用 ${disabledFactions.length}`;
+            } else {
+                tip.textContent = '当前是选族阶段：点击未禁用种族进行选择/取消选择，同色只能选择一个。';
+                completeBanBtn.classList.add('hidden');
+                backToBanBtn.classList.remove('hidden');
+                nextToBidBtn.classList.remove('hidden');
+                randomAllBtn.disabled = false;
+                randomAllBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (badge) badge.textContent = `选族阶段 | 选中 ${selectedFactions.length} / 至少 ${playerCount}`;
+            }
+        }
+
+        // Ban 和选族分阶段处理
+        function toggleFactionState(btn) {
+            const faction = btn.dataset.faction;
+            const pair = btn.dataset.pair;
+            const pairBtn = document.querySelector(`[data-faction="${pair}"]`);
+
+            if (factionPhase === 'ban') {
+                btn.classList.remove('selected', 'paired-banned');
+                selectedFactions = selectedFactions.filter(f => f !== faction);
+                if (pairBtn && pairBtn.classList.contains('paired-banned')) {
+                    pairBtn.classList.remove('paired-banned');
+                }
+
+                if (btn.classList.contains('disabled')) {
+                    btn.classList.remove('disabled');
+                    disabledFactions = disabledFactions.filter(f => f !== faction);
+                } else {
+                    btn.classList.add('disabled');
+                    if (!disabledFactions.includes(faction)) {
+                        disabledFactions.push(faction);
+                    }
+                }
+            } else {
+                if (btn.classList.contains('disabled')) {
+                    return;
+                }
+                if (btn.classList.contains('paired-banned')) {
+                    return;
+                }
+                if (btn.classList.contains('selected')) {
+                    btn.classList.remove('selected');
+                    selectedFactions = selectedFactions.filter(f => f !== faction);
+                    if (pairBtn && !disabledFactions.includes(pair)) {
+                        pairBtn.classList.remove('paired-banned');
+                    }
+                } else {
+                    btn.classList.add('selected');
+                    if (!selectedFactions.includes(faction)) {
+                        selectedFactions.push(faction);
+                    }
+                    if (pairBtn && !pairBtn.classList.contains('disabled')) {
+                        pairBtn.classList.add('paired-banned');
+                        pairBtn.classList.remove('selected');
+                        selectedFactions = selectedFactions.filter(f => f !== pair);
+                    }
+                }
+            }
+
+            updateNextButton();
+        }
+
+        // 更新下一步按钮状态
+        function updateNextButton() {
+            const btn = document.getElementById('next-to-bid');
+            btn.disabled = factionPhase !== 'select' || selectedFactions.length < playerCount;
+            const summary = document.getElementById('selected-factions-summary');
+            const badge = document.querySelector('.faction-board-badge');
+            const selectedNames = selectedFactions.map(getFactionName);
+            const disabledNames = disabledFactions.map(getFactionName);
+            summary.textContent = factionPhase === 'ban'
+                ? (disabledNames.length ? `已 Ban ${disabledNames.length} 个种族：${disabledNames.join('、')}` : '已 Ban 0 个种族')
+                : (selectedNames.length ? `已选择 ${selectedNames.length} 个种族：${selectedNames.join('、')}` : '已选择 0 个种族');
+            if (badge) {
+                badge.textContent = factionPhase === 'ban'
+                    ? `Ban 阶段 | 已禁用 ${disabledFactions.length}`
+                    : `选族阶段 | 选中 ${selectedFactions.length} / 至少 ${playerCount}`;
+            }
+        }
+
+        // 随机补充种族（保留已选中和已禁用的）
+        function randomAllFactions() {
+            if (factionPhase !== 'select') return;
+            const includeExpansion = document.getElementById('include-expansion').checked;
+            const availablePairs = allFactions.filter(p => !p.isExpansion || includeExpansion);
+            
+            // 找出还没有被选择或禁用的颜色对
+            const usedColors = new Set();
+            document.querySelectorAll('.faction-btn.selected, .faction-btn.disabled').forEach(btn => {
+                const pair = allFactions.find(p => p.name1En === btn.dataset.faction || p.name2En === btn.dataset.faction);
+                if (pair) usedColors.add(pair.color);
+            });
+
+            const unusedPairs = availablePairs.filter(p => !usedColors.has(p.color));
+            
+            // 计算还需要选择多少个种族
+            const needMore = playerCount - selectedFactions.length;
+            
+            if (needMore <= 0 || unusedPairs.length === 0) return;
+
+            // 随机选择需要的数量
+            const shuffledPairs = [...unusedPairs].sort(() => Math.random() - 0.5);
+            const selectedPairs = shuffledPairs.slice(0, needMore);
+
+            selectedPairs.forEach(pair => {
+                const chooseFirst = Math.random() > 0.5;
+                const faction = chooseFirst ? pair.name1En : pair.name2En;
+                const btn = document.querySelector(`[data-faction="${faction}"]`);
+                toggleFactionState(btn);
+            });
+        }
+
+        // 显示步骤二中的种族选择顺序
+        function showRandomizedFactions() {
+            const list = document.getElementById('randomized-factions-list');
+            list.innerHTML = '';
+
+            randomizedFactions.forEach((faction, index) => {
+                let factionName = faction;
+                allFactions.forEach(pair => {
+                    if (pair.name1En === faction) factionName = pair.name1;
+                    if (pair.name2En === faction) factionName = pair.name2;
+                });
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center bg-white border border-green-300 rounded px-2 py-1 text-sm';
+                div.innerHTML = `
+                    <span class="faction-order-badge">${index+1}</span>
+                    <span>${factionName}</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // 显示竞拍页面的种族顺序（沿用步骤二选择顺序）
+        function showAuctionFactions() {
+            const list = document.getElementById('auction-factions-list');
+            list.innerHTML = '';
+
+            randomizedFactions.forEach((faction, index) => {
+                let factionName = faction;
+                allFactions.forEach(pair => {
+                    if (pair.name1En === faction) factionName = pair.name1;
+                    if (pair.name2En === faction) factionName = pair.name2;
+                });
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center bg-white border border-blue-300 rounded px-2 py-1 text-sm';
+                div.innerHTML = `
+                    <span class="faction-order-badge">${index+1}</span>
+                    <span>${factionName}</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // 渲染出价表格（行列调换版：玩家行，种族列，完美适配Tab键）
+        function renderBidTable() {
+            const container = document.getElementById('bid-table-container');
+            
+            let tableHTML = `
+                <table class="w-full border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border p-2 text-left">玩家</th>
+                            ${randomizedFactions.map(f => {
+                                let factionName = f;
+                                allFactions.forEach(pair => {
+                                    if (pair.name1En === f) factionName = pair.name1;
+                                    if (pair.name2En === f) factionName = pair.name2;
+                                });
+                                return `<th class="border p-2 text-center">${factionName}</th>`;
+                            }).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            playerOrder.forEach(player => {
+                tableHTML += `
+                    <tr>
+                        <td class="border p-2 font-medium">${player}</td>
+                        ${randomizedFactions.map(f => `
+                            <td class="border p-2 text-center">
+                                <input type="number" min="0" max="100" value="0" 
+                                       class="bid-input w-14 text-center border rounded px-1 py-1 text-sm"
+                                       data-player="${player}" data-faction="${f}">
+                            </td>
+                        `).join('')}
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+
+            // 初始化bids对象
+            bids = {};
+            playerOrder.forEach(p => {
+                bids[p] = {};
+                randomizedFactions.forEach(f => {
+                    bids[p][f] = 0;
+                });
+            });
+
+            // 添加输入事件
+            document.querySelectorAll('.bid-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    bids[e.target.dataset.player][e.target.dataset.faction] = parseInt(e.target.value) || 0;
+                });
+            });
+        }
+
+        // ✅ 100%复刻BGA官方竞拍算法 + 全中文日志
+        function precomputeAuctionSteps() {
+            const players = [...playerOrder];
+            const factions = [...randomizedFactions];
+            const currentBids = {};
+            const currentWinners = {};
+            const steps = [];
+
+            // 初始化：所有种族当前出价为-1（无人出价）
+            factions.forEach(f => {
+                currentBids[f] = -1;
+                currentWinners[f] = null;
+            });
+
+            // 初始状态
+            steps.push({
+                type: 'init',
+                currentBids: {...currentBids},
+                currentWinners: {...currentWinners},
+                log: { type: 'info', message: '拍卖开始！玩家将自动出价在"当前出价与自己最高出价差距最大"的种族上' }
+            });
+
+            let round = 0;
+            while (true) {
+                round++;
+                let anyBidMade = false;
+
+                // 按照玩家顺位一轮一轮出价
+                for (const player of players) {
+                    // 已经领先一个种族的玩家，不再出价
+                    const playerAlreadyHasAWinner = Object.values(currentWinners).includes(player);
+                    if (playerAlreadyHasAWinner) {
+                        continue;
+                    }
+
+                    // 计算每个种族的差值
+                    const gaps = {};
+                    factions.forEach(f => {
+                        // 如果当前领先者已经是自己，差值设为-1
+                        if (currentWinners[f] === player) {
+                            gaps[f] = -1;
+                        } else {
+                            gaps[f] = bids[player][f] - currentBids[f];
+                        }
+                    });
+
+                    // 找到差值最大的种族
+                    let bestFaction = null;
+                    let maxGap = -Infinity;
+                    
+                    Object.entries(gaps).forEach(([f, gap]) => {
+                        if (gap > maxGap) {
+                            maxGap = gap;
+                            bestFaction = f;
+                        } else if (gap === maxGap) {
+                            // 差值相同时，优先选择无人出价的种族
+                            if (currentBids[f] === -1 && currentBids[bestFaction] !== -1) {
+                                bestFaction = f;
+                            }
+                        }
+                    });
+
+                    // 如果没有可出价的种族（所有差值<=0），跳过
+                    if (bestFaction === null || maxGap <= 0) {
+                        continue;
+                    }
+
+                    // 计算新出价
+                    const newBid = currentBids[bestFaction] === -1 ? 0 : currentBids[bestFaction] + 1;
+
+                    // 确保不会超过最高出价
+                    if (newBid > bids[player][bestFaction]) {
+                        continue;
+                    }
+
+                    // 记录之前的赢家
+                    const previousWinner = currentWinners[bestFaction];
+
+                    // 更新出价和赢家
+                    currentBids[bestFaction] = newBid;
+                    currentWinners[bestFaction] = player;
+                    anyBidMade = true;
+
+                    // 生成中文日志
+                    let factionName = bestFaction;
+                    allFactions.forEach(pair => {
+                        if (pair.name1En === bestFaction) factionName = pair.name1;
+                        if (pair.name2En === bestFaction) factionName = pair.name2;
+                    });
+
+                    let logMessage;
+                    if (previousWinner === null) {
+                        logMessage = `${player} 出价 ${newBid} VP 对 [${factionName}]（最高可出 ${bids[player][bestFaction]} VP）`;
+                    } else {
+                        logMessage = `${player} 出价 ${newBid} VP 对 [${factionName}]，超过 ${previousWinner}（距离自己最高出价还有 ${bids[player][bestFaction] - newBid} VP）`;
+                    }
+
+                    // 添加步骤
+                    steps.push({
+                        type: 'bid',
+                        currentPlayer: player,
+                        currentFaction: bestFaction,
+                        currentBids: {...currentBids},
+                        currentWinners: {...currentWinners},
+                        log: { type: 'bid', message: logMessage }
+                    });
+                }
+
+                // 正确的BGA结束条件
+                const allFactionsHaveWinners = Object.values(currentWinners).every(w => w !== null);
+                const winnerCounts = {};
+                Object.values(currentWinners).forEach(w => {
+                    if (w !== null) {
+                        winnerCounts[w] = (winnerCounts[w] || 0) + 1;
+                    }
+                });
+                const eachPlayerHasExactlyOne = Object.values(winnerCounts).every(count => count === 1);
+                const allPlayersHaveAWinner = Object.keys(winnerCounts).length === players.length;
+
+                if (allFactionsHaveWinners && eachPlayerHasExactlyOne && allPlayersHaveAWinner) {
+                    break;
+                }
+
+                // 如果一轮中没有任何出价，结束拍卖
+                if (!anyBidMade) {
+                    break;
+                }
+
+                // 防止无限循环的终极保护
+                if (round > 1000) {
+                    break;
+                }
+            }
+
+            // 添加最终结果日志（中文）
+            Object.entries(currentWinners).forEach(([faction, player]) => {
+                if (player !== null) {
+                    let factionName = faction;
+                    allFactions.forEach(pair => {
+                        if (pair.name1En === faction) factionName = pair.name1;
+                        if (pair.name2En === faction) factionName = pair.name2;
+                    });
+
+                    steps.push({
+                        type: 'win',
+                        currentPlayer: player,
+                        currentFaction: faction,
+                        currentBids: {...currentBids},
+                        currentWinners: {...currentWinners},
+                        log: { 
+                            type: 'win', 
+                            message: `🎉 ${player} 赢得 [${factionName}]，花费 ${currentBids[faction]} VP` 
+                        }
+                    });
+                }
+            });
+
+            // 计算VP补偿
+            const maxPaid = Math.max(...Object.values(currentBids).filter(b => b >= 0));
+            
+            steps.push({
+                type: 'complete',
+                currentBids: {...currentBids},
+                currentWinners: {...currentWinners},
+                log: { 
+                    type: 'info', 
+                    message: `💰 所有玩家获得 ${maxPaid} VP 补偿，确保最高出价者仍有 10 VP 开始游戏` 
+                },
+                maxPaid: maxPaid
+            });
+
+            return steps;
+        }
+
+        // ✅ 终极优化表格：添加独立当前出价列
+        function renderAuctionStatusTable(step) {
+            const table = document.getElementById('auction-status-table');
+            
+            let tableHTML = `
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border p-2 text-left w-24">种族</th>
+                        <th class="border p-2 text-center w-16">当前出价</th>
+                        ${playerOrder.map(player => `
+                            <th class="border p-2 text-center">${player}</th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            randomizedFactions.forEach(faction => {
+                let factionName = faction;
+                allFactions.forEach(pair => {
+                    if (pair.name1En === faction) factionName = pair.name1;
+                    if (pair.name2En === faction) factionName = pair.name2;
+                });
+
+                const currentBid = step.currentBids[faction];
+                const currentWinner = step.currentWinners[faction];
+                const isHighlighted = step.currentFaction === faction;
+
+                let rowClass = '';
+                if (step.type === 'complete' || step.type === 'win') {
+                    rowClass = 'winner-cell';
+                } else if (isHighlighted) {
+                    rowClass = 'bg-yellow-50';
+                }
+
+                // 处理当前出价显示
+                const displayBid = currentBid === -1 ? '-' : currentBid;
+
+                tableHTML += `
+                    <tr class="${rowClass}">
+                        <td class="border p-2 font-medium">${factionName}</td>
+                        <td class="border p-2 text-center current-bid">${displayBid}</td>
+                        ${playerOrder.map(player => {
+                            const originalBid = bids[player][faction];
+                            const gap = currentBid === -1 ? originalBid : originalBid - currentBid;
+                            const isLeader = currentWinner === player;
+                            const cellClass = isLeader ? 'leader-cell' : '';
+                            
+                            return `
+                                <td class="border p-1.5 text-center ${cellClass}">
+                                    <div class="original-bid">${originalBid}</div>
+                                    <div class="gap-value">+${gap >= 0 ? gap : 0}</div>
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                </tbody>
+            `;
+
+            table.innerHTML = tableHTML;
+        }
+
+        // 显示当前步骤
+        function showCurrentStep() {
+            const step = auctionSteps[currentStepIndex];
+            
+            // 渲染状态表格
+            renderAuctionStatusTable(step);
+
+            // 添加日志
+            const logContainer = document.getElementById('auction-log');
+            let className = 'log-entry';
+            if (step.log.type === 'bid') className += ' log-bid';
+            if (step.log.type === 'win') className += ' log-win';
+            if (step.log.type === 'switch') className += ' log-switch';
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = className;
+            logEntry.textContent = step.log.message;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // 更新按钮状态
+            document.getElementById('prev-step').disabled = currentStepIndex === 0;
+            document.getElementById('next-step').disabled = currentStepIndex === auctionSteps.length - 1;
+
+            // 如果是最后一步，显示最终结果
+            if (step.type === 'complete') {
+                showFinalResults(step);
+                stopAutoPlay();
+                document.getElementById('auto-play').disabled = true;
+                document.getElementById('next-step').disabled = true;
+                document.getElementById('skip-animation').disabled = true;
+            }
+        }
+
+        // 显示最终结果
+        function showFinalResults(step) {
+            const resultsContainer = document.getElementById('final-results');
+            const summaryContainer = document.getElementById('results-summary');
+            
+            resultsContainer.classList.remove('hidden');
+
+            // 生成结果摘要
+            let summaryHTML = '<h3 class="text-base font-bold mb-2">最终分配结果</h3><ul class="space-y-1 text-sm">';
+            
+            playerOrder.forEach(player => {
+                let faction = null;
+                let paid = 0;
+                
+                randomizedFactions.forEach(f => {
+                    if (step.currentWinners[f] === player) {
+                        faction = f;
+                        paid = step.currentBids[f];
+                    }
+                });
+
+                let factionName = faction;
+                allFactions.forEach(pair => {
+                    if (pair.name1En === faction) factionName = pair.name1;
+                    if (pair.name2En === faction) factionName = pair.name2;
+                });
+
+                const startingVP = 10 + (step.maxPaid - paid);
+
+                summaryHTML += `
+                    <li>
+                        <strong>${player}</strong> 获得 <strong>${factionName}</strong>，
+                        花费 ${paid} VP，游戏开始时拥有 <strong>${startingVP} VP</strong>
+                    </li>
+                `;
+            });
+
+            summaryHTML += '</ul>';
+            summaryContainer.innerHTML = summaryHTML;
+        }
+
+        // 自动播放
+        function startAutoPlay() {
+            if (autoPlayInterval) return;
+            
+            document.getElementById('auto-play').textContent = '⏸ 暂停';
+            autoPlayInterval = setInterval(() => {
+                if (currentStepIndex < auctionSteps.length - 1) {
+                    currentStepIndex++;
+                    showCurrentStep();
+                } else {
+                    stopAutoPlay();
+                }
+            }, 800);
+        }
+
+        // 停止自动播放
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                document.getElementById('auto-play').textContent = '▶ 自动播放';
+            }
+        }
+
+        // 跳过动画
+        function skipAnimation() {
+            stopAutoPlay();
+            
+            // 清空日志
+            document.getElementById('auction-log').innerHTML = '';
+            
+            // 显示所有步骤
+            while (currentStepIndex < auctionSteps.length - 1) {
+                currentStepIndex++;
+                const step = auctionSteps[currentStepIndex];
+                
+                // 只添加日志
+                const logContainer = document.getElementById('auction-log');
+                let className = 'log-entry';
+                if (step.log.type === 'bid') className += ' log-bid';
+                if (step.log.type === 'win') className += ' log-win';
+                if (step.log.type === 'switch') className += ' log-switch';
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = className;
+                logEntry.textContent = step.log.message;
+                logContainer.appendChild(logEntry);
+            }
+
+            // 显示最终状态和结果
+            const finalStep = auctionSteps[auctionSteps.length - 1];
+            renderAuctionStatusTable(finalStep);
+            showFinalResults(finalStep);
+            
+            // 更新按钮状态
+            document.getElementById('prev-step').disabled = false;
+            document.getElementById('next-step').disabled = true;
+            document.getElementById('auto-play').disabled = true;
+            document.getElementById('skip-animation').disabled = true;
+        }
+
+        // 切换步骤
+        function switchStep(fromStep, toStep) {
+            document.getElementById(`step${fromStep}`).classList.add('hidden');
+            document.getElementById(`step${toStep}`).classList.remove('hidden');
+            
+            document.getElementById(`step${fromStep}-indicator`).classList.remove('step-active');
+            document.getElementById(`step${fromStep}-indicator`).classList.add('bg-gray-200', 'text-gray-600');
+            
+            document.getElementById(`step${toStep}-indicator`).classList.add('step-active');
+            document.getElementById(`step${toStep}-indicator`).classList.remove('bg-gray-200', 'text-gray-600');
+
+            // 如果切换到竞拍页面，显示种族顺序
+            if (toStep === 3) {
+                showAuctionFactions();
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 玩家数量变化
+            document.getElementById('player-count').addEventListener('change', (e) => {
+                playerCount = parseInt(e.target.value);
+                renderPlayerNames();
+            });
+
+            // 下一步到选择种族
+            document.getElementById('next-to-factions').addEventListener('click', () => {
+                shufflePlayerOrder();
+                switchStep(0, 1);
+            });
+
+            // 返回设置玩家
+            document.getElementById('back-to-names').addEventListener('click', () => {
+                document.getElementById('player-order-display').classList.add('hidden');
+                switchStep(1, 0);
+            });
+
+            // 扩展包开关
+            document.getElementById('include-expansion').addEventListener('change', () => {
+                selectedFactions = [];
+                disabledFactions = [];
+                factionPhase = 'ban';
+                renderFactions();
+                setFactionPhase('ban');
+            });
+
+            // 随机选择按钮
+            document.getElementById('random-all').addEventListener('click', randomAllFactions);
+
+            // 重置按钮
+            document.getElementById('reset-factions').addEventListener('click', () => {
+                selectedFactions = [];
+                disabledFactions = [];
+                renderFactions();
+                setFactionPhase('ban');
+            });
+
+            document.getElementById('complete-ban-phase').addEventListener('click', () => {
+                selectedFactions = [];
+                document.querySelectorAll('.faction-btn').forEach(btn => {
+                    btn.classList.remove('selected', 'paired-banned');
+                });
+                setFactionPhase('select');
+                updateNextButton();
+            });
+
+            document.getElementById('go-to-ban-phase').addEventListener('click', () => {
+                selectedFactions = [];
+                document.querySelectorAll('.faction-btn').forEach(btn => {
+                    btn.classList.remove('selected', 'paired-banned');
+                });
+                setFactionPhase('ban');
+                updateNextButton();
+            });
+
+            // 下一步到出价
+            document.getElementById('next-to-bid').addEventListener('click', () => {
+                randomizedFactions = [...selectedFactions];
+                switchStep(1, 2);
+                showRandomizedFactions();
+                renderBidTable();
+            });
+
+            // 返回选择种族
+            document.getElementById('back-to-factions').addEventListener('click', () => {
+                switchStep(2, 1);
+            });
+
+            // 开始竞拍
+            document.getElementById('start-auction').addEventListener('click', () => {
+                // 预计算所有步骤
+                auctionSteps = precomputeAuctionSteps();
+                currentStepIndex = 0;
+                
+                // 重置竞拍页面
+                document.getElementById('auction-log').innerHTML = '';
+                document.getElementById('final-results').classList.add('hidden');
+                document.getElementById('auto-play').disabled = false;
+                document.getElementById('next-step').disabled = false;
+                document.getElementById('skip-animation').disabled = false;
+                document.getElementById('auto-play').textContent = '▶ 自动播放';
+                
+                switchStep(2, 3);
+                showCurrentStep();
+            });
+
+            // 竞拍控制按钮
+            document.getElementById('prev-step').addEventListener('click', () => {
+                if (currentStepIndex > 0) {
+                    currentStepIndex--;
+                    // 重新渲染所有日志到当前步骤
+                    document.getElementById('auction-log').innerHTML = '';
+                    for (let i = 0; i <= currentStepIndex; i++) {
+                        const step = auctionSteps[i];
+                        const logContainer = document.getElementById('auction-log');
+                        let className = 'log-entry';
+                        if (step.log.type === 'bid') className += ' log-bid';
+                        if (step.log.type === 'win') className += ' log-win';
+                        if (step.log.type === 'switch') className += ' log-switch';
+                        
+                        const logEntry = document.createElement('div');
+                        logEntry.className = className;
+                        logEntry.textContent = step.log.message;
+                        logContainer.appendChild(logEntry);
+                    }
+                    renderAuctionStatusTable(auctionSteps[currentStepIndex]);
+                    
+                    document.getElementById('next-step').disabled = false;
+                    document.getElementById('auto-play').disabled = false;
+                    document.getElementById('skip-animation').disabled = false;
+                }
+            });
+
+            document.getElementById('next-step').addEventListener('click', () => {
+                if (currentStepIndex < auctionSteps.length - 1) {
+                    currentStepIndex++;
+                    showCurrentStep();
+                }
+            });
+
+            document.getElementById('auto-play').addEventListener('click', () => {
+                if (autoPlayInterval) {
+                    stopAutoPlay();
+                } else {
+                    startAutoPlay();
+                }
+            });
+
+            document.getElementById('skip-animation').addEventListener('click', skipAnimation);
+
+            // 重新开始
+            document.getElementById('restart').addEventListener('click', () => {
+                stopAutoPlay();
+                document.getElementById('player-order-display').classList.add('hidden');
+                switchStep(3, 0);
+                selectedFactions = [];
+                disabledFactions = [];
+                randomizedFactions = [];
+                auctionSteps = [];
+                currentStepIndex = 0;
+                renderFactions();
+                setFactionPhase('ban');
+            });
+        }
+    </script>
+</body>
+</html>
+
